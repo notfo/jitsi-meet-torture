@@ -390,7 +390,7 @@ public class JitsiMeetUrl
             url += "/" + tenantName;
         }
 
-        if (planedConferences > 0 || (planedConferences == 0 && roomName.equals("loadtest"))){
+        if (planedConferences > 1 || !roomName.equals("loadtest")){
             url += "/" + roomName;
         }
 
