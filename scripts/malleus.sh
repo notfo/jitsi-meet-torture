@@ -84,7 +84,7 @@ case $1 in
     # new arg parsing code that includes default values for the different options.
     for arg in "$@"; do
       optname=`echo $arg | cut -d= -f1`
-      optvalue=`echo $arg | cut -s -d= -f2`
+      optvalue=`echo $arg | cut -s -d= -f2-10`
       case $optname in
         --conferences) MALLEUS_CONFERENCES=$optvalue;;
         --allow-insecure-certs) MALLEUS_ALLOW_INSECURE_CERTS=$optvalue;;

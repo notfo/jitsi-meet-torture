@@ -74,6 +74,10 @@ public class JitsiMeetUrl
      * an iframe loaded and we need to navigate to it, once it is loaded.
      */
     private String iframeToNavigateTo;
+    /**
+     * This variable is the amount of planed conferences
+     */
+    private int planedConferences;
 
     /**
      * Returns the iframeToNavigateTo value.
@@ -82,6 +86,14 @@ public class JitsiMeetUrl
     public String getIframeToNavigateTo()
     {
         return iframeToNavigateTo;
+    }
+
+    public int getPlanedConferences() {
+        return planedConferences;
+    }
+
+    public void setPlanedConferences(int planedConferences) {
+        this.planedConferences = planedConferences;
     }
 
     /**
@@ -378,7 +390,9 @@ public class JitsiMeetUrl
             url += "/" + tenantName;
         }
 
-        url += "/" + roomName;
+        if (planedConferences > 0 || (planedConferences == 0 && roomName.equals("loadtest"))){
+            url += "/" + roomName;
+        }
 
         if (StringUtils.isNotBlank(roomParameters))
         {
