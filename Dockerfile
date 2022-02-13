@@ -1,4 +1,3 @@
-                                                                                                                                       Dockerfile
 FROM meetrix/jitsi-meet-torture
 MAINTAINER Emanuel <entwicklung@h2-invent.com>
 
