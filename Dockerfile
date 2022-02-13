@@ -1,4 +1,4 @@
-  GNU nano 5.4                                                                                                                                             Dockerfile
+                                                                                                                                       Dockerfile
 FROM meetrix/jitsi-meet-torture
 MAINTAINER Emanuel <entwicklung@h2-invent.com>
 
