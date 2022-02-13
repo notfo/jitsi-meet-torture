@@ -1,4 +1,3 @@
-docker-compose.yml# Official images are cool.
 FROM meetrix/jitsi-meet-torture
 MAINTAINER Emanuel <entwicklung@h2-invent.com>
 
