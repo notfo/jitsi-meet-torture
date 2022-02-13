@@ -4,7 +4,7 @@ MAINTAINER Emanuel <entwicklung@h2-invent.com>
 USER root
 run apt update -y
 run apt install git -y
-run rm -rf /jitsi-meet-tortur
+run rm -rf /jitsi-meet-torture
 run mkdir /jitsi-meet-torture
 
 COPY resources /jitsi-meet-torture
