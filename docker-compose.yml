@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+  torture:
+    build: Dockerfile/
+
+  hub:
+    image: selenium/hub:3.141.59
+  node:
+    image: meetrix/jitsi-meet-torture-selenium-node:latest
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - hub
+    environment:
+      HUB_HOST: hub
