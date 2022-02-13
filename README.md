@@ -1,76 +1,100 @@
-jitsi-meet-torture
-==================
+## General
 
-# Running 
-To run tests against a Jitsi-Meet instance running on `https://meet.example.com` use:
+To test your Jitsi-Meet Performance there are many differnt ways to perform a perfomance test.
 
-```mvn test -Djitsi-meet.instance.url="https://meet.example.com"```
+The best way is to test choosing a browser based test, but it´s not that easy to find some collegues or friend to test you jitsi-meet server in a propper way.
 
-## Controlling which tests to run
-To specify a list of tests to run, instead of the default of running all tests, set the `jitsi-meet.tests.toRun` property to a comma-separated list of class names (relative to org.jitsi.meet.test):
+So we build op a new testenvironment which also works with jwt authentication. This is not working in a lot of other jitsi-torture tests.
+You can als add bots to your conference which you are already in.
 
-```mvn test -Djitsi-meet.instance.url="https://meet.example.com" -Djitsi-meet.tests.toRun="MuteTest,TCPTest"```
-
-
-To disable certain tests from being run set the `jitsi-meet.tests.toExclude` property:
-
-```mvn test -Djitsi-meet.instance.url="https://meet.example.com" -Djitsi-meet.tests.toExclude="EtherpadTests"```
+So first we need to install docker and docker-composer on our server. We recommend to use a linux server, not windows, because the torture test will take a lot of performance.
+We take some steps from the original post https://meetrix.io/blog/webrtc/jitsi/jitsi-meet-load-testing.html
 
 
-Note that `SetupConference` will always be run as the first test, and `DisposeConference` will always be run as the last test.
 
-## Running IFrameAPITest
-To run IFrameAPITest an iframe implementation is needed. You can upload the file resources/files/iframeAPITest.html to your deployment and pass it as a param:
-Make sure the file is accessible as `https://meet.example.com/iframeAPITest.html`
-
-```mvn test -Djitsi-meet.instance.url="https://meet.example.com" -Dorg.jitsi.iframe.page_path="https://meet.example.com" -Djitsi-meet.tests.toRun="IFrameAPITest"```
-
-# Mobile testing
-
-## Running locally
-
-### Start appium
- - plug your phone
- - ``export ANDROID_HOME="~/Library/Android/sdk"``
- - ``appium``
-### Start tests
-- pass settings as params
-  * mobile.participant (mobile.[android|ios])
-  * mobile.deviceName
-  * mobile.app (path to apk or ipa file of jitsi-meet to test)
-- start tests
-``mvn test -Dmobile.participant=mobile.android -Dmobile.deviceName=your_device_name -Dmobile.app=absolute/path/to/app.apk -Djitsi-meet.instance.url="https://beta.meet.jit.si" -Phybrid -Dmobile.android.reinstallApp=true``
-
-### Package mobile tests
-``mvn package -Dmobile.participant=android ... -Pmobile`` 
-
-## Writing mobile tests
-To be able to use the tests with services like AWS Device Farm which has 
-limitations how they run the tests there are some general rules.
-In order to be able to specify the tests to run we are using testng and
-it config file testng.xml 
-* The tests does not have order, priority, grouping.
-* All tests to be ran are declared in src/test/resources/mobile/testng.xml 
-    (just the class name)
-* Tests extend org.jitsi.meet.test.mobile.base.AstractBaseTest which is 
-responsible for setting up the driver.
-* You cannot use static variables shared between tests.
-* With all the above limitations we end up with one class 
-with one test method.
+![02-10-load-testing-jitsi-meet-01.png](https://h2-invent.com/storage/app/uploads/public/620/8e5/6d4/6208e56d4fe37847171013.png)
 
 
-## PSNR Tests
-The PSNR tests will run by default if:
-* The `PSNRTest.INPUT_FRAME_DIR` exists and
-* The `ConferenceFixture.FAKE_VIDEO_FNAME_PROP` file exists
+## Clone Repository
+We create a fork with some changes to trigger specific urls including JWT. You can use clone this repository to perform the test. __https://github.com/holema/jitsi-meet-torture__
 
-The `scripts/psnr-build-resources.sh` can be used to build the needed resources from a y4m file like so:
+In the first step, you have to clone the repository on our local host and jump into the directory
 ```
-scripts/psnr-build-resources.sh ./FourPeople_1280x720_30.y4m
+mkdir /tmp/jitsi-torture && cd /tmp/jitsi-torture
+git clone https://github.com/holema/jitsi-meet-torture.git
+cd jitsi-meet-torture
+```
+This can take some while bcause we deliver all the sounds and videos for the test.
+
+## Requirements
+When cloning the repository is finished we have to build the special docker image we use for the
+test.
+You need to have __docker__ and __docker-compose__ installed on the host. This depends on you OS and is not descriped here.
+
+## Docker build
+After installing Docker Compose on your system run docker build to build the custom image
+```
+docker-compose build
+```
+This command  will build a new docker image which is used to setup the test with docker.
+
+## Docker compose and scale the number of participants
+
+For setting up the test infrastructure, it important to understand, that every docker container creates one participant which will later join the conference. So you have to create as many docker containers as you want. Here we work with two docker container
+```
+docker-compose up -d --scale node=<AMOUNT OF NODES>
+```
+This will now download the rest of the images wich are shown in the image above.
+
+_After this step, the infrastructure is ready and you can start the tests inside the containers._
+
+## Show all containers
+
+When your setup is created correctly you can start with testing and torture your jitsi-meet server. To perform a test you first check if your infrastructure is up.
+
+To see all your running docker container enter:
+
+```
+docker ps
 ```
 
-The `ConferenceFixture.FAKE_VIDEO_FNAME_PROP` property should point to the stamped y4m file that was created from the above script.
+![Bild_2022-02-13_121541.png](https://h2-invent.com/storage/app/uploads/public/620/8e8/5da/6208e85dad494729919184.png)
 
-The test will output the calculated PSNR value for each frame, as well as a running average for all frames.  If `ConferenceFixture.PSNR_OUTPUT_DIR_PROP` and `ConferenceFixture.PSNR_OUTPUT_FILENAME_PROP` are set, the overall average PSNR value will be written to the file described by the two properties.
 
-`scripts/push_psnr_results.py` can be invoked to push the psnr value (and some variables from the jenkins build environment) to a configured URL.
+The output should be something like this with all your containers listed with a number (postfix).
+
+## Run the test
+When all your conatiners show the Status __UP__ you can start.
+
+Here you just type the following command:
+```
+docker exec jitsi-meet-torture_torture_1  ./scripts/malleus.sh --conferences=1 --participants=<AMOUNT OF PARTICIPANTS> --senders=<AMOUNT OF VIDEOS STREAMS> --audio-senders=<AMOUNT OF AUDIO STREAMS> --duration=<DURATION IN SEC> --room-name-prefix= --hub-url=http://hub:4444/wd/hub --instance-url=<ENTER HERE YOUR JITSI CONFERENCE URL ALSO WITH JWT IF YOU USE ONE>
+```
+* --conferences: here the number of conferences. The torture agounst a specific room only works when this is set to 1
+* --participants: amount of participants which should joint the room. this must be smaller or equal the nodes
+* --senders: amount of how many participants send a video
+* --audio-senders: amount of participants sending a audio
+* -- duration: how long sending the torture in sec (600 = 10min)
+* --hub-url: leav as it is
+* --instance-url: Here you should enter your specific room to test (ex. https://meetexample.com/myroomtotest). If you use a jwt authentication set the url with your JWT token (ex. https://meetexample.com/myroomtotest?jwt=ey........)
+
+This will now start the Torture test agains the configured URL.
+
+
+![Bild_2022-02-13_122115.png](https://h2-invent.com/storage/app/uploads/public/620/8e9/ad7/6208e9ad7cc05622498214.png)
+
+Here you can see a room which is protected with a JWT token and the torture video streams.
+
+## Shutdown testinfrastucture
+To shutdown the complete infrastructure enter the following command:
+
+```
+docker-compose down
+```
+
+
+## Hint
+You need a lot of CPU, Memory, and Network Ressources to performe the tests. Otherwise, your test infrastructure will collape and will not test the performance of your Jitsi Meet Server.
+
+# Support
+__If you have questions or need support with testing the performance of your Jitsi Meet Server, you can send us an Email.__
